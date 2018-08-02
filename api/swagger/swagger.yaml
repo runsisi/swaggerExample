@@ -1,0 +1,215 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Swagger Example App
+# during dev, should point to your local machine
+host: localhost:10010
+# basePath prefixes all resource paths 
+basePath: /
+# 
+schemes:
+  # tip: remove http to make production-grade
+  - http
+  - https
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+paths:
+  /swagger:
+    x-swagger-pipe: swagger_raw
+  /movie:
+    # our controller name
+    x-swagger-router-controller: movie # the controller's file name with suffix stripped
+    get:
+      description: get the movies list
+      # if we are running in mock mode, operationId is not needed, we will get
+      # the default data constructed by the swagger-node, but if we do have it
+      # defined, then the controller under mocks/ will be used
+      operationId: get_movies
+      # define the type of response for Success "200" and Error
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GetMoviesListResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+        description: add a new movie to the list
+        # if we do not define the operationId, then the swagger-node will use
+        # the default handler name constructed from controller name and http
+        # verb, i.e., movie_post
+        # movie info to be stored
+        parameters:
+          - name: details # used to extract from request object, e.g., req.swagger.params.details.value
+            description: Movie properties
+            in: body
+            required: true
+            schema:
+              $ref: "#/definitions/Movie"
+        responses:
+          "200":
+            description: Success
+            schema:
+              $ref: "#/definitions/GeneralResponse"
+          default:
+            description: Error
+            schema:
+              $ref: "#/definitions/ErrorResponse"
+  /movie/{id}:
+    # our controller name
+    x-swagger-router-controller: movie
+    get:
+      description: get a movie's detail
+      operationId: get
+      # define the type of response for Success "200" and Error
+      parameters:
+      - name: id
+        type: string
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GetMovieResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    put:
+      description: update a movie
+      # define the parameters
+      parameters:
+      - name: id
+        description: Movie id
+        type: string
+        in: path
+        required: true
+      - name: details
+        description: Movie properties
+        in: body
+        required: true
+        schema:
+          $ref: "#/definitions/Movie"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GeneralResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      description: delete a movie
+      operationId: delete_
+      # define the parameters
+      parameters:
+      - name: id
+        description: Movie id
+        type: string
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GeneralResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /test:
+    x-swagger-router-controller: hello
+    get:
+      description: Returns 'Hello' to the caller
+      # used as the method name of the controller
+      operationId: say
+      parameters:
+        - name: name
+          in: query
+          description: The name of the person to whom to say hello
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/HelloResponse"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+# complex objects have schema definitions
+definitions:
+  Movie:
+    type: object
+    properties:
+      title:
+        type: string
+        description: movie title
+      year:
+        type: number
+        description: movie published year
+    required:
+      - title
+      - year
+  GetMovieResponse:
+    type: object
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+      year:
+        type: number
+    required:
+      - id
+      - title
+      - year
+  GetMoviesListResponse:
+    type: array
+    items:
+      $ref: "#/definitions/MovieDbRecord"
+  MovieDbRecord:
+    type: object
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+      year:
+        type: number
+  GeneralResponse:
+    type: object
+    properties:
+      success:
+        type: number
+        description: returns 1 if successful
+      description:
+        type: string
+        description: a short comment 
+    required:
+      - success
+      - description
+  HelloResponse:
+    type: object
+    properties:
+      message:
+        type: string
+    required:
+      - message
+  ErrorResponse:
+    properties:
+      message:
+        type: string
+    required:
+      - message
