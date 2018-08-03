@@ -48,7 +48,9 @@ export let get = (req, res) => {
 export let put = (req, res) => {
   let params = req.swagger.params;
   let id = params.id.value;
-  let {title, year} = params.details.value;
+
+  // could be extracted from req.swagger.params.details.value too
+  let {title, year} = req.body;
 
   // update db
   for (const [idx, m] of movies.entries()) {
@@ -59,7 +61,7 @@ export let put = (req, res) => {
     }
   }
 
-  res.json({"success": 1, "description": "created ok"});
+  res.json({"success": 1, "description": "updated ok"});
 };
 
 export let delete_ = (req, res) => {
