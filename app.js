@@ -4,24 +4,36 @@
 require('babel-register');
 require("babel-polyfill");
 
-var SwaggerExpress = require('swagger-express-mw');
-var app = require('express')();
-module.exports = app; // for testing
+const express = require('express');
+const createMiddleware = require('swagger-express-middleware');
+const path = require('path');
+const yaml = require('yamljs');
+const swaggerUi = require('swagger-ui-express');
 
-var config = {
-  appRoot: __dirname // required config
+const swaggerFile = path.join(__dirname, 'api/swagger/swagger.yaml');
+const swaggerDocument = yaml.load(swaggerFile);
+const port = process.env.PORT || 9000;
+
+let app = express();
+
+// swagger-ui-express
+const options = {
+  explorer: false
 };
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, options));
 
-SwaggerExpress.create(config, function(err, swaggerExpress) {
-  if (err) { throw err; }
+// swagger-express-middleware
+createMiddleware(swaggerFile, app, (err, middleware) => {
+  app.use(
+    middleware.metadata(),
+    middleware.CORS(),
+    middleware.files(),
+    middleware.parseRequest(),
+    middleware.validateRequest(),
+    middleware.mock()
+  );
 
-  // install middleware
-  swaggerExpress.register(app);
-
-  var port = process.env.PORT || 10010;
-  app.listen(port);
-
-  if (swaggerExpress.runner.swagger.paths['/hello']) {
-    console.log('try this:\ncurl http://127.0.0.1:' + port + '/hello?name=Scott');
-  }
+  app.listen(port, function() {
+    console.log(`running at http://localhost:${port}`);
+  });
 });
